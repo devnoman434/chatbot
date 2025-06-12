@@ -153,7 +153,7 @@
       renderChat(chatHistory);
 
       try {
-        const response = await fetch("/ask", {
+        const response = await fetch("api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt })
@@ -177,5 +177,6 @@
 
     document.getElementById("askButton").addEventListener("click", askAI);
   </script>
+  <script src="api/ask.js"></script>
 </body>
 </html>
