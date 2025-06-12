@@ -95,6 +95,20 @@
         color: #0ff;
       }
 
+      .msg pre,
+      .msg code {
+        max-width: 100%;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.5rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        display: block;
+        color: #00ffff;
+        font-family: monospace;
+      }
+
       .msg p {
         margin: 0.4rem 0 0 0;
         white-space: pre-wrap;
@@ -114,7 +128,6 @@
 
         .container {
           padding: 1rem;
-          max-width: fit-content;
         }
 
         textarea {
@@ -124,8 +137,8 @@
         button {
           font-size: 1rem;
         }
-        h1{
-            font-size: large;
+        h1 {
+          font-size: large;
         }
       }
     </style>
