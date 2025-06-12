@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 const ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const API_TOKEN = process.env.CF_API_TOKEN;
-const MODEL_NAME = '@hf/google/gemma-7b-it'; 
+const MODEL_NAME = '@hf/thebloke/deepseek-coder-6.7b-instruct-awq'; 
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
