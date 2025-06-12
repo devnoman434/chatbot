@@ -19,7 +19,7 @@ const MODEL_NAME = '@hf/google/gemma-7b-it';
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-app.post("/ask", async (req, res) => {
+app.post("https://chatbot-tau-gilt.vercel.app/ask", async (req, res) => {
   const userPrompt = req.body.prompt;
   if (!userPrompt) return res.status(400).json({ success: false, error: "Missing prompt." });
 
