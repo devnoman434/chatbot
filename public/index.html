@@ -222,6 +222,13 @@
         .getElementById("clearButton")
         .addEventListener("click", clearChat);
 
+      promptInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          askAI();
+        }
+      });
+
       // Optional: Clear chat history button
       function clearChat() {
         localStorage.removeItem("chatHistory");
