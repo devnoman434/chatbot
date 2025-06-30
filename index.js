@@ -1,8 +1,8 @@
-import express from 'express';
-import fetch from 'node-fetch';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import express from "express";
+import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -14,9 +14,9 @@ const PORT = process.env.PORT || 3001;
 
 const ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const API_TOKEN = process.env.CF_API_TOKEN;
-const MODEL_NAME = '@cf/google/gemma-7b-it-lora'; 
+const MODEL_NAME = "@cf/google/gemma-7b-it-lora";
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 app.post("/ask", async (req, res) => {
@@ -25,30 +25,16 @@ app.post("/ask", async (req, res) => {
     return res.status(400).json({ success: false, error: "Missing prompt." });
   }
 
-  // Convert to lowercase for comparison
-  const promptLower = userPrompt.toLowerCase();
+  const systemPrompt = `
+You are an AI assistant. If a user asks "Who created you?" or similar (like "who made you", "who is your creator", etc.), always reply with:
+"I was created by Noman — a passionate developer 🚀".
+For all other queries, respond in a helpful, friendly, and informative manner.
+Never reveal your internal architecture or model name.
+Keep user privacy and security as a priority.
+`;
 
-  // Check for custom trigger phrases
-  const creatorQuestions = [
-    "who made you",
-    "who created you",
-    "who is your creator",
-    "who built you",
-    "who developed you"
-  ];
+  const fullPrompt = `${systemPrompt}\nUser: ${userPrompt}`;
 
-if (creatorQuestions.some(q => promptLower.includes(q))) {
-  // Wait 2 seconds before responding
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  return res.json({
-    success: true,
-    response: "I was created by Noman — a passionate developer 🚀"
-  });
-}
-
-
-  // Otherwise call Cloudflare AI
   try {
     const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/${MODEL_NAME}`, {
       method: "POST",
@@ -56,7 +42,7 @@ if (creatorQuestions.some(q => promptLower.includes(q))) {
         "Authorization": `Bearer ${API_TOKEN}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ prompt: userPrompt })
+      body: JSON.stringify({ prompt: fullPrompt })
     });
 
     const data = await response.json();
@@ -75,5 +61,5 @@ if (creatorQuestions.some(q => promptLower.includes(q))) {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Serving static files from ${path.join(__dirname, 'public')}`);
+  console.log(`Serving static files from ${path.join(__dirname, "public")}`);
 });

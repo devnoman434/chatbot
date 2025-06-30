@@ -94,7 +94,7 @@
       .msg.chatbot strong {
         color: #0ff;
       }
- 
+
       .msg code {
         max-width: 100%;
         white-space: pre-wrap;
@@ -144,80 +144,90 @@
       <div id="chatBox"></div>
       <textarea id="prompt" placeholder="What's your Query..."></textarea>
       <button id="askButton">Submit</button>
+      <button id="clearButton" style="background: #f44336; margin-top: 10px">
+        Clear Chat
+      </button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-  const chatBox = document.getElementById("chatBox");
-  const promptInput = document.getElementById("prompt");
-  let chatHistory = [];
+      const chatBox = document.getElementById("chatBox");
+      const promptInput = document.getElementById("prompt");
+      let chatHistory = [];
 
-  // Load chat history from localStorage if available
-  if (localStorage.getItem("chatHistory")) {
-    chatHistory = JSON.parse(localStorage.getItem("chatHistory"));
-    renderChat(chatHistory);
-  }
+      // Load chat history from localStorage if available
+      if (localStorage.getItem("chatHistory")) {
+        chatHistory = JSON.parse(localStorage.getItem("chatHistory"));
+        renderChat(chatHistory);
+      }
 
-  function formatMarkdown(text) {
-    return marked.parse(text);
-  }
+      function formatMarkdown(text) {
+        return marked.parse(text);
+      }
 
-  function renderChat(history) {
-    chatBox.innerHTML = "";
-    history.forEach((msg) => {
-      const div = document.createElement("div");
-      div.className = `msg ${msg.role}`;
-      div.innerHTML = `<strong>${msg.role}:</strong><p>${msg.message}</p>`;
-      chatBox.appendChild(div);
-    });
+      function renderChat(history) {
+        chatBox.innerHTML = "";
+        history.forEach((msg) => {
+          const div = document.createElement("div");
+          div.className = `msg ${msg.role}`;
+          div.innerHTML = `<strong>${msg.role}:</strong><p>${msg.message}</p>`;
+          chatBox.appendChild(div);
+        });
 
-    // Save updated history to localStorage
-    localStorage.setItem("chatHistory", JSON.stringify(history));
-  }
+        // Save updated history to localStorage
+        localStorage.setItem("chatHistory", JSON.stringify(history));
+      }
 
-  async function askAI() {
-    const prompt = promptInput.value.trim();
-    if (!prompt) return;
+      async function askAI() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
 
-    chatHistory.push({ role: "👤 You", message: prompt });
-    chatHistory.push({ role: "🤖 Chatbot", message: "⌛ Loading...", loading: true });
-    renderChat(chatHistory);
+        chatHistory.push({ role: "👤 You", message: prompt });
+        chatHistory.push({
+          role: "🤖 Chatbot",
+          message: "⌛ Loading...",
+          loading: true,
+        });
+        renderChat(chatHistory);
 
-    try {
-      const response = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
+        try {
+          const response = await fetch("/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
 
-      const data = await response.json();
-      const rawResponse = data.result?.response || data.response || "❌ No response";
-      const formatted = formatMarkdown(rawResponse);
+          const data = await response.json();
+          const rawResponse =
+            data.result?.response || data.response || "❌ No response";
+          const formatted = formatMarkdown(rawResponse);
 
-      chatHistory.pop(); // Remove "Loading..." message
-      chatHistory.push({ role: "🤖 Chatbot", message: formatted });
-      renderChat(chatHistory);
-    } catch (err) {
-      chatHistory.pop();
-      chatHistory.push({
-        role: "🤖 Chatbot",
-        message: "❌ Failed to fetch response",
-      });
-      renderChat(chatHistory);
-    }
+          chatHistory.pop(); // Remove "Loading..." message
+          chatHistory.push({ role: "🤖 Chatbot", message: formatted });
+          renderChat(chatHistory);
+        } catch (err) {
+          chatHistory.pop();
+          chatHistory.push({
+            role: "🤖 Chatbot",
+            message: "❌ Failed to fetch response",
+          });
+          renderChat(chatHistory);
+        }
 
-    promptInput.value = "";
-  }
+        promptInput.value = "";
+      }
 
-  document.getElementById("askButton").addEventListener("click", askAI);
+      document.getElementById("askButton").addEventListener("click", askAI);
+      document
+        .getElementById("clearButton")
+        .addEventListener("click", clearChat);
 
-  // Optional: Clear chat history button
-  function clearChat() {
-    localStorage.removeItem("chatHistory");
-    chatHistory = [];
-    renderChat(chatHistory);
-  }
-</script>
-
+      // Optional: Clear chat history button
+      function clearChat() {
+        localStorage.removeItem("chatHistory");
+        chatHistory = [];
+        renderChat(chatHistory);
+      }
+    </script>
   </body>
 </html>
