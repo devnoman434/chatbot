@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Noman's AI Chatbot</title>
+    <link rel="icon" type="image/svg+xml" href="ai.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        padding: 2rem;
+        margin: 0;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        background-size: 400% 400%;
+        animation: bgShift 15s ease infinite;
+        color: #fff;
+      }
+
+      @keyframes bgShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .container {
+        max-width: 800px;
+        margin: auto;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+      }
+
+      textarea {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1rem;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 12px 24px;
+        background: #0ff;
+        border: none;
+        border-radius: 6px;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+        transition: 0.3s ease;
+        width: 100%;
+      }
+
+      button:hover {
+        box-shadow: 0 0 20px #0ff, 0 0 30px #0ff;
+        transform: scale(1.03);
+      }
+
+      #chatBox {
+        margin-top: 20px;
+      }
+
+      .msg {
+        margin-bottom: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        box-shadow: inset 0 0 10px #0ff20f30;
+      }
+
+      .msg.you strong {
+        color: #00ff90;
+      }
+
+      .msg.chatbot strong {
+        color: #0ff;
+      }
+
+      .msg code {
+        max-width: 100%;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-x: auto;
+        color: #00ffff;
+        font-family: monospace;
+      }
+
+      .msg p {
+        margin: 0.4rem 0 0 0;
+        white-space: pre-wrap;
+        color: #e0ffff;
+      }
+
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        text-align: center;
+        color: #0ff;
+      }
+
+      @media screen and (max-width: 600px) {
+        body {
+          padding: 1rem;
+        }
+
+        .container {
+          padding: 1rem;
+        }
+
+        textarea {
+          font-size: 1rem;
+        }
+
+        button {
+          font-size: 1rem;
+        }
+        h1 {
+          font-size: large;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Noman's AI ChatBot</h1>
+      <div id="chatBox"></div>
+      <textarea id="prompt" placeholder="What's your Query..."></textarea>
+      <button id="askButton">Submit</button>
+      <button id="clearButton" style="background: #f44336; margin-top: 10px">
+        Clear Chat
+      </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      const chatBox = document.getElementById("chatBox");
+      const promptInput = document.getElementById("prompt");
+      let chatHistory = [];
+
+      // Load chat history from localStorage if available
+      if (localStorage.getItem("chatHistory")) {
+        chatHistory = JSON.parse(localStorage.getItem("chatHistory"));
+        renderChat(chatHistory);
+      }
+
+      function formatMarkdown(text) {
+        return marked.parse(text);
+      }
+
+      function renderChat(history) {
+        chatBox.innerHTML = "";
+        history.forEach((msg) => {
+          const div = document.createElement("div");
+          div.className = `msg ${msg.role}`;
+          div.innerHTML = `<strong>${msg.role}:</strong><p>${msg.message}</p>`;
+          chatBox.appendChild(div);
+        });
+
+        // Save updated history to localStorage
+        localStorage.setItem("chatHistory", JSON.stringify(history));
+      }
+
+      async function askAI() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+
+        chatHistory.push({ role: "👤 You", message: prompt });
+        chatHistory.push({
+          role: "🤖 Chatbot",
+          message: "⌛ Loading...",
+          loading: true,
+        });
+        renderChat(chatHistory);
+
+        try {
+          const response = await fetch("/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+
+          const data = await response.json();
+          const rawResponse =
+            data.result?.response || data.response || "❌ No response";
+          const formatted = formatMarkdown(rawResponse);
+
+          chatHistory.pop(); // Remove "Loading..." message
+          chatHistory.push({ role: "🤖 Chatbot", message: formatted });
+          renderChat(chatHistory);
+        } catch (err) {
+          chatHistory.pop();
+          chatHistory.push({
+            role: "🤖 Chatbot",
+            message: "❌ Failed to fetch response",
+          });
+          renderChat(chatHistory);
+        }
+
+        promptInput.value = "";
+      }
+
+      document.getElementById("askButton").addEventListener("click", askAI);
+      document
+        .getElementById("clearButton")
+        .addEventListener("click", clearChat);
+
+      promptInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          askAI();
+        }
+      });
+
+      // Optional: Clear chat history button
+      function clearChat() {
+        localStorage.removeItem("chatHistory");
+        chatHistory = [];
+        renderChat(chatHistory);
+      }
+    </script>
+  </body>
+</html>
